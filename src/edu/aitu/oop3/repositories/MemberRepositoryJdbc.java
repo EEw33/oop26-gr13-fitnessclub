@@ -1,38 +1,46 @@
 package edu.aitu.oop3.repositories;
 
-import edu.aitu.oop3.db.IDB;
 import edu.aitu.oop3.entities.Member;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class MemberRepositoryJdbc implements MemberRepository {
+    private final Connection connection;
 
-    private final IDB db;
-
-    public MemberRepositoryJdbc(IDB db) {
-        this.db = db;
+    public MemberRepositoryJdbc(Connection connection) {
+        this.connection = connection;
     }
 
     @Override
     public Member create(Member member) {
-        String sql = "insert into members (name, email) values (?, ?) returning id";
+        String sql = """
+            INSERT INTO members (full_name, email, membership_type_id, membership_start, membership_end)
+            VALUES (?, ?, ?, ?, ?)
+            RETURNING id
+            """;
 
-        try (Connection con = db.getConnection();
-             PreparedStatement st = con.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, member.getName()); // в объекте name, в БД full_name
+            stmt.setString(2, member.getEmail());
 
-            st.setString(1, member.getName());
-            st.setString(2, member.getEmail());
+            if (member.getMembershipTypeId() == null) {
+                stmt.setNull(3, Types.BIGINT);
+            } else {
+                stmt.setLong(3, member.getMembershipTypeId());
+            }
 
-            try (ResultSet rs = st.executeQuery()) {
+            stmt.setString(4, member.getMembershipStart());
+            stmt.setString(5, member.getMembershipEnd());
+
+            try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     member.setId(rs.getLong("id"));
+                    return member;
                 }
+                throw new RuntimeException("Failed to create member: no id returned.");
             }
-            return member;
-
         } catch (SQLException e) {
             throw new RuntimeException("Failed to create member: " + e.getMessage(), e);
         }
@@ -40,44 +48,62 @@ public class MemberRepositoryJdbc implements MemberRepository {
 
     @Override
     public List<Member> findAll() {
-        String sql = "select id, name, email from members order by id";
+        String sql = """
+            SELECT id, full_name, email, membership_type_id, membership_start, membership_end
+            FROM members
+            ORDER BY id
+            """;
+
         List<Member> members = new ArrayList<>();
 
-        try (Connection con = db.getConnection();
-             PreparedStatement st = con.prepareStatement(sql);
-             ResultSet rs = st.executeQuery()) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
+                Object obj = rs.getObject("membership_type_id");
+                Long mt = (obj == null) ? null : ((Number) obj).longValue();
+
                 members.add(new Member(
                         rs.getLong("id"),
-                        rs.getString("name"),
-                        rs.getString("email")
+                        rs.getString("full_name"),
+                        rs.getString("email"),
+                        mt,
+                        rs.getString("membership_start"),
+                        rs.getString("membership_end")
                 ));
             }
             return members;
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to list members: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to read members: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public Optional<Member> findById(long id) {
-        String sql = "select id, name, email from members where id = ?";
+    public Member findById(long id) {
+        String sql = """
+            SELECT id, full_name, email, membership_type_id, membership_start, membership_end
+            FROM members
+            WHERE id = ?
+            """;
 
-        try (Connection con = db.getConnection();
-             PreparedStatement st = con.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setLong(1, id);
 
-            st.setLong(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (!rs.next()) return null;
 
-            try (ResultSet rs = st.executeQuery()) {
-                if (!rs.next()) return Optional.empty();
+                Object obj = rs.getObject("membership_type_id");
+                Long mt = (obj == null) ? null : ((Number) obj).longValue();
 
-                return Optional.of(new Member(
+                return new Member(
                         rs.getLong("id"),
-                        rs.getString("name"),
-                        rs.getString("email")
-                ));
+                        rs.getString("full_name"),
+                        rs.getString("email"),
+                        mt,
+                        rs.getString("membership_start"),
+                        rs.getString("membership_end")
+                );
             }
 
         } catch (SQLException e) {
