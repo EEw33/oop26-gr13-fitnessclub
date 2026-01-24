@@ -2,6 +2,8 @@ package edu.aitu.oop3.db;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
+import edu.aitu.oop3.db.IDB;
 public class DatabaseConnection implements IDB {
     private static final String URL =
             "jdbc:postgresql://aws-1-eu-west-1.pooler.supabase.com:5432/postgres?sslmode=require";

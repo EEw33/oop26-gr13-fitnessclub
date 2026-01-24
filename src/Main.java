@@ -5,7 +5,15 @@ import edu.aitu.oop3.db.IDB;
 import edu.aitu.oop3.entities.ClassBooking;
 import edu.aitu.oop3.entities.FitnessClass;
 import edu.aitu.oop3.entities.Member;
-import edu.aitu.oop3.repositories.*;
+import edu.aitu.oop3.repositories.MemberRepository;
+import edu.aitu.oop3.repositories.MemberRepositoryJdbc;
+
+import edu.aitu.oop3.repositories.FitnessClassRepository;
+import edu.aitu.oop3.repositories.FitnessClassRepositoryJdbc;
+
+import edu.aitu.oop3.repositories.BookingRepository;
+import edu.aitu.oop3.repositories.BookingRepositoryJdbc;
+
 
 import java.sql.Connection;
 import java.util.List;

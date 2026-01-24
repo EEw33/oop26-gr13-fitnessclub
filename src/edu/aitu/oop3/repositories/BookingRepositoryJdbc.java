@@ -2,6 +2,7 @@ package edu.aitu.oop3.repositories;
 
 
 import edu.aitu.oop3.entities.ClassBooking;
+import edu.aitu.oop3.repositories.BookingRepository;
 
 import java.sql.*;
 import java.util.ArrayList;
