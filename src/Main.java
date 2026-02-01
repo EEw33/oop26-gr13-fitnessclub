@@ -1,30 +1,28 @@
 package edu.aitu.oop3;
 
 import edu.aitu.oop3.db.DatabaseConnection;
-import edu.aitu.oop3.db.IDB;
 import edu.aitu.oop3.entities.ClassBooking;
 import edu.aitu.oop3.entities.FitnessClass;
 import edu.aitu.oop3.entities.Member;
+import edu.aitu.oop3.entities.MembershipType;
+import edu.aitu.oop3.factories.MembershipTypeFactory;
+import edu.aitu.oop3.repositories.BookingRepository;
+import edu.aitu.oop3.repositories.BookingRepositoryJdbc;
+import edu.aitu.oop3.repositories.FitnessClassRepository;
+import edu.aitu.oop3.repositories.FitnessClassRepositoryJdbc;
 import edu.aitu.oop3.repositories.MemberRepository;
 import edu.aitu.oop3.repositories.MemberRepositoryJdbc;
 
-import edu.aitu.oop3.repositories.FitnessClassRepository;
-import edu.aitu.oop3.repositories.FitnessClassRepositoryJdbc;
-
-import edu.aitu.oop3.repositories.BookingRepository;
-import edu.aitu.oop3.repositories.BookingRepositoryJdbc;
-
-
 import java.sql.Connection;
+import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
-        IDB db = new DatabaseConnection();
-
-        try (Connection connection = db.getConnection();
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
              Scanner scanner = new Scanner(System.in)) {
 
             MemberRepository memberRepo = new MemberRepositoryJdbc(connection);
@@ -41,6 +39,7 @@ public class Main {
                     case "2" -> listClasses(classRepo);
                     case "3" -> bookClass(scanner, memberRepo, classRepo, bookingRepo);
                     case "4" -> viewHistory(scanner, bookingRepo);
+                    case "5" -> addMemberWithBuilderAndFactory(scanner, memberRepo);
                     case "0" -> {
                         System.out.println("Goodbye!");
                         return;
@@ -63,12 +62,16 @@ public class Main {
         System.out.println("2) List classes");
         System.out.println("3) Book a class");
         System.out.println("4) View attendance history");
+        System.out.println("5) Add member (Builder+Factory)");
         System.out.println("0) Exit");
     }
 
     private static void listMembers(MemberRepository memberRepo) {
         System.out.println("\n--- MEMBERS ---");
         List<Member> members = memberRepo.findAll();
+
+        members.sort(Comparator.comparing(Member::getName, String.CASE_INSENSITIVE_ORDER));
+
         if (members.isEmpty()) {
             System.out.println("No members found.");
             return;
@@ -88,6 +91,35 @@ public class Main {
         for (FitnessClass c : classes) {
             System.out.println(c.getId() + " | " + c.getName() + " | capacity=" + c.getCapacity());
         }
+    }
+
+    private static void addMemberWithBuilderAndFactory(Scanner scanner, MemberRepository memberRepo) {
+        System.out.println("\n--- ADD MEMBER (Builder+Factory) ---");
+
+        System.out.print("Enter full name: ");
+        String name = scanner.nextLine().trim();
+
+        System.out.print("Enter email: ");
+        String email = scanner.nextLine().trim();
+
+        System.out.print("Enter membership type (BASIC / PREMIUM / STUDENT): ");
+        String type = scanner.nextLine().trim();
+
+        MembershipType mt = MembershipTypeFactory.create(type);
+
+        LocalDate start = LocalDate.now();
+        LocalDate end = start.plusDays(mt.getDurationDays());
+
+        Member member = new Member.Builder()
+                .name(name)
+                .email(email)
+                .membershipTypeId((long) mt.getId())
+                .membershipStart(start.toString())
+                .membershipEnd(end.toString())
+                .build();
+
+        Member created = memberRepo.create(member);
+        System.out.println("Created member id=" + created.getId() + " | " + mt.getName());
     }
 
     private static void bookClass(Scanner scanner,
@@ -117,7 +149,6 @@ public class Main {
             return;
         }
 
-        // class full check
         int current = bookingRepo.countByClassId(classId);
         if (current >= fc.getCapacity()) {
             System.out.println("Class is full.");

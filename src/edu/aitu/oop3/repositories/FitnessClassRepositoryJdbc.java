@@ -1,13 +1,16 @@
 package edu.aitu.oop3.repositories;
 
 import edu.aitu.oop3.entities.FitnessClass;
-import edu.aitu.oop3.repositories.FitnessClassRepository;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FitnessClassRepositoryJdbc implements FitnessClassRepository {
+
     private final Connection connection;
 
     public FitnessClassRepositoryJdbc(Connection connection) {
@@ -15,29 +18,16 @@ public class FitnessClassRepositoryJdbc implements FitnessClassRepository {
     }
 
     @Override
-    public List<FitnessClass> findAll() {
-        String sql = "SELECT id, title, capacity FROM classes ORDER BY id";
-        List<FitnessClass> classes = new ArrayList<>();
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                classes.add(new FitnessClass(
-                        rs.getInt("id"),
-                        rs.getString("title"),     // <-- было name, стало title
-                        rs.getInt("capacity")
-                ));
-            }
-            return classes;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to read classes: " + e.getMessage(), e);
-        }
+    public FitnessClass create(FitnessClass entity) {
+        throw new UnsupportedOperationException("Not required for milestone");
     }
 
     @Override
-    public FitnessClass findById(int id) {
-        String sql = "SELECT id, title, capacity FROM classes WHERE id = ?";
+    public FitnessClass findById(Integer id) {
+        if (id == null) return null;
+
+        String sql = "SELECT id, name, capacity FROM fitness_classes WHERE id = ?";
+
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, id);
 
@@ -46,12 +36,34 @@ public class FitnessClassRepositoryJdbc implements FitnessClassRepository {
 
                 return new FitnessClass(
                         rs.getInt("id"),
-                        rs.getString("title"),
+                        rs.getString("name"),
                         rs.getInt("capacity")
                 );
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find class: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to find class", e);
         }
+    }
+
+    @Override
+    public List<FitnessClass> findAll() {
+        List<FitnessClass> classes = new ArrayList<>();
+        String sql = "SELECT id, name, capacity FROM fitness_classes";
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                classes.add(new FitnessClass(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getInt("capacity")
+                ));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to fetch classes", e);
+        }
+
+        return classes;
     }
 }

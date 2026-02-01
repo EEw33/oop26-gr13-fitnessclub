@@ -1,4 +1,4 @@
-package edu.aitu.oop3.edu.aitu.oop3.services;
+package edu.aitu.oop3.services;
 
 import edu.aitu.oop3.entities.FitnessClass;
 import edu.aitu.oop3.entities.Member;
@@ -29,14 +29,11 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public void bookClass(long memberId, int classId) {
-        // 1) Member exists?
         Member member = memberRepo.findById(memberId);
         if (member == null) {
             throw new NotFoundException("Member", memberId);
         }
 
-        // 2) Membership expired?
-        // DB DATE type into JAVA STRING type
         String endStr = member.getMembershipEnd();
         if (endStr == null || endStr.isBlank()) {
             throw new MembershipExpiredException(memberId);
@@ -44,7 +41,7 @@ public class BookingServiceImpl implements BookingService {
 
         LocalDate endDate;
         try {
-            endDate = LocalDate.parse(endStr); // expects yyyy-MM-dd
+            endDate = LocalDate.parse(endStr);
         } catch (Exception e) {
             throw new AppExceptions("Invalid membership_end format for member id=" + memberId + ": " + endStr, e);
         }
@@ -53,19 +50,16 @@ public class BookingServiceImpl implements BookingService {
             throw new MembershipExpiredException(memberId);
         }
 
-        // 3) Class exists?
         FitnessClass fc = classRepo.findById(classId);
         if (fc == null) {
             throw new NotFoundException("FitnessClass", classId);
         }
 
-        // 4) Class full?
         int current = bookingRepo.countByClassId(classId);
         if (current >= fc.getCapacity()) {
             throw new ClassFullException(classId);
         }
 
-        // 5) Booking already exists? (your repo returns false if conflict)
         boolean inserted = bookingRepo.createIfNotExists((int) memberId, classId);
         if (!inserted) {
             throw new BookingAlreadyExistsException(memberId, classId);
