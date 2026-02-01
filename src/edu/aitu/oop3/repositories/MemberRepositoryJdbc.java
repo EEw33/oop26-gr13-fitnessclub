@@ -125,4 +125,9 @@ public class MemberRepositoryJdbc implements MemberRepository {
 
         return members;
     }
+
+    @Override
+    public void update(Member member) {
+
+    }
 }

@@ -1,4 +1,4 @@
-package edu.aitu.oop3.services;
+package edu.aitu.oop3.services.impl;
 
 import edu.aitu.oop3.entities.FitnessClass;
 import edu.aitu.oop3.entities.Member;
@@ -11,6 +11,7 @@ import edu.aitu.oop3.exceptions.BookingAlreadyExistsException;
 import edu.aitu.oop3.exceptions.ClassFullException;
 import edu.aitu.oop3.exceptions.NotFoundException;
 import edu.aitu.oop3.exceptions.MembershipExpiredException;
+import edu.aitu.oop3.services.BookingService;
 
 import java.time.LocalDate;
 

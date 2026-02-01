@@ -5,6 +5,7 @@ import edu.aitu.oop3.entities.ClassBooking;
 import edu.aitu.oop3.entities.FitnessClass;
 import edu.aitu.oop3.entities.Member;
 import edu.aitu.oop3.entities.MembershipType;
+import edu.aitu.oop3.exceptions.NotFoundException;
 import edu.aitu.oop3.factories.MembershipTypeFactory;
 import edu.aitu.oop3.repositories.BookingRepository;
 import edu.aitu.oop3.repositories.BookingRepositoryJdbc;
@@ -12,6 +13,8 @@ import edu.aitu.oop3.repositories.FitnessClassRepository;
 import edu.aitu.oop3.repositories.FitnessClassRepositoryJdbc;
 import edu.aitu.oop3.repositories.MemberRepository;
 import edu.aitu.oop3.repositories.MemberRepositoryJdbc;
+import edu.aitu.oop3.services.MembershipService;
+import edu.aitu.oop3.services.impl.MembershipServiceImpl;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -35,11 +38,41 @@ public class Main {
                 String input = scanner.nextLine().trim();
 
                 switch (input) {
+                    MembershipService membershipService = new MembershipServiceImpl(memberRepo);
                     case "1" -> listMembers(memberRepo);
                     case "2" -> listClasses(classRepo);
                     case "3" -> bookClass(scanner, memberRepo, classRepo, bookingRepo);
                     case "4" -> viewHistory(scanner, bookingRepo);
                     case "5" -> addMemberWithBuilderAndFactory(scanner, memberRepo);
+
+
+
+                    case "6" -> {
+                        long memberId = readInt(scanner, "Member ID: ");
+                        int days = readInt(scanner, "Duration (days): ");
+
+                        try {
+                            membershipService.buyMembership(memberId, days);
+                            System.out.println("Membership activated.");
+                        } catch (Exception e) {
+                            System.out.println(e.getMessage());
+                        }
+                    }
+
+                    case "7" -> {
+                        long memberId = readInt(scanner, "Member ID: ");
+                        int days = readInt(scanner, "Extend by days: ");
+
+                        try {
+                            membershipService.extendMembership(memberId, days);
+                            System.out.println("Membership extended.");
+                        } catch (Exception e) {
+                            System.out.println(e.getMessage());
+                        }
+                    }
+
+
+
                     case "0" -> {
                         System.out.println("Goodbye!");
                         return;
