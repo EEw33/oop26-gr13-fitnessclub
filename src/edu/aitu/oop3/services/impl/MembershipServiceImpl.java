@@ -18,7 +18,7 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     public Member buyMembership(Long memberId, int durationDays) throws NotFoundException {
         Member m = memberRepo.findById(memberId);
-        if (m == null) throw new NotFoundException("Member not found: " + memberId);
+        if (m == null) throw new NotFoundException("Member", memberId);
 
         LocalDate start = LocalDate.now();
         LocalDate end = start.plusDays(durationDays);
@@ -33,7 +33,7 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     public Member extendMembership(Long memberId, int durationDays) throws NotFoundException {
         Member m = memberRepo.findById(memberId);
-        if (m == null) throw new NotFoundException("Member not found: " + memberId);
+        if (m == null) throw new NotFoundException("Member", memberId);
 
         LocalDate today = LocalDate.now();
 
