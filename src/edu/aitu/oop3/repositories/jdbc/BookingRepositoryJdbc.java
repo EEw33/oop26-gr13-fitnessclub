@@ -1,4 +1,4 @@
-package edu.aitu.oop3.repositories;
+package edu.aitu.oop3.repositories.jdbc;
 
 
 import edu.aitu.oop3.entities.ClassBooking;

@@ -4,4 +4,6 @@ import edu.aitu.oop3.entities.Member;
 
 public interface MemberRepository extends Repository<Member, Long> {
     void update(Member member);
+
+    void save(Member member);
 }

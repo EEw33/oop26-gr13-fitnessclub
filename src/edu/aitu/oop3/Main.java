@@ -8,13 +8,14 @@ import edu.aitu.oop3.entities.MembershipType;
 import edu.aitu.oop3.exceptions.NotFoundException;
 import edu.aitu.oop3.factories.MembershipTypeFactory;
 import edu.aitu.oop3.repositories.BookingRepository;
-import edu.aitu.oop3.repositories.BookingRepositoryJdbc;
+import edu.aitu.oop3.repositories.jdbc.BookingRepositoryJdbc;
 import edu.aitu.oop3.repositories.FitnessClassRepository;
-import edu.aitu.oop3.repositories.FitnessClassRepositoryJdbc;
+import edu.aitu.oop3.repositories.jdbc.FitnessClassRepositoryJdbc;
 import edu.aitu.oop3.repositories.MemberRepository;
-import edu.aitu.oop3.repositories.MemberRepositoryJdbc;
+import edu.aitu.oop3.repositories.jdbc.MemberRepositoryJdbc;
 import edu.aitu.oop3.services.MembershipService;
 import edu.aitu.oop3.services.impl.MembershipServiceImpl;
+import edu.aitu.oop3.utils.Filter;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -28,8 +29,8 @@ public class Main {
         try (Connection connection = DatabaseConnection.getInstance().getConnection();
              Scanner scanner = new Scanner(System.in)) {
 
-            MemberRepository memberRepo = new MemberRepositoryJdbc(connection);
-            FitnessClassRepository classRepo = new FitnessClassRepositoryJdbc(connection);
+            MemberRepository memberRepo = new MemberRepositoryJdbc((DatabaseConnection) connection);
+            FitnessClassRepository classRepo = new FitnessClassRepository(connection);
             BookingRepository bookingRepo = new BookingRepositoryJdbc(connection);
 
             while (true) {
@@ -71,6 +72,20 @@ public class Main {
                         }
                     }
 
+                    case "8" -> {
+                        List<Member> members = memberRepo.findAll();
+
+                        List<Member> activeMembers = Filter.filter(members, m -> {
+                            String end = m.getMembershipEnd();
+                            if (end == null || end.isBlank()) return false;
+                            return !LocalDate.parse(end).isBefore(LocalDate.now());
+                        });
+
+                        System.out.println("Active members:");
+                        for (Member m : activeMembers) {
+                            System.out.println(m.getId() + " | " + m.getName() + " | until: " + m.getMembershipEnd());
+                        }
+                    }
 
 
                     case "0" -> {
@@ -96,6 +111,9 @@ public class Main {
         System.out.println("3) Book a class");
         System.out.println("4) View attendance history");
         System.out.println("5) Add member (Builder+Factory)");
+        System.out.println("6) Buy membership");
+        System.out.println("7) Extend membership");
+        System.out.println("8) Show active members (Lambda + Predicate)");
         System.out.println("0) Exit");
     }
 
