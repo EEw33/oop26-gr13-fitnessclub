@@ -1,6 +1,7 @@
 package edu.aitu.oop3.repositories.jdbc;
 
 import edu.aitu.oop3.entities.FitnessClass;
+import edu.aitu.oop3.repositories.FitnessClassRepository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

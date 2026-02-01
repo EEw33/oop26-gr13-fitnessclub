@@ -18,6 +18,7 @@ import edu.aitu.oop3.services.impl.MembershipServiceImpl;
 import edu.aitu.oop3.utils.Filter;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
@@ -25,51 +26,44 @@ import java.util.Scanner;
 
 public class Main {
 
-    public static void main(String[] args) {
-        try (Connection connection = DatabaseConnection.getInstance().getConnection();
-             Scanner scanner = new Scanner(System.in)) {
+    public static void main(String[] args) throws SQLException {
+        Scanner scanner = new Scanner(System.in);
 
-            MemberRepository memberRepo = new MemberRepositoryJdbc((DatabaseConnection) connection);
-            FitnessClassRepository classRepo = new FitnessClassRepository(connection);
-            BookingRepository bookingRepo = new BookingRepositoryJdbc(connection);
+        DatabaseConnection db = DatabaseConnection.getInstance();
+        Connection connection = db.getConnection();
 
+        MemberRepository memberRepo = new MemberRepositoryJdbc(db);
+        FitnessClassRepository classRepo = new FitnessClassRepositoryJdbc(connection);
+        BookingRepository bookingRepo = new BookingRepositoryJdbc(connection);
+
+        MembershipService membershipService = new MembershipServiceImpl(memberRepo);
+
+
+        try {
             while (true) {
                 printMenu();
                 System.out.print("Choose an option: ");
                 String input = scanner.nextLine().trim();
 
                 switch (input) {
-                    MembershipService membershipService = new MembershipServiceImpl(memberRepo);
                     case "1" -> listMembers(memberRepo);
                     case "2" -> listClasses(classRepo);
                     case "3" -> bookClass(scanner, memberRepo, classRepo, bookingRepo);
                     case "4" -> viewHistory(scanner, bookingRepo);
                     case "5" -> addMemberWithBuilderAndFactory(scanner, memberRepo);
 
-
-
                     case "6" -> {
-                        long memberId = readInt(scanner, "Member ID: ");
+                        long memberId = readLong(scanner, "Member ID: ");
                         int days = readInt(scanner, "Duration (days): ");
-
-                        try {
-                            membershipService.buyMembership(memberId, days);
-                            System.out.println("Membership activated.");
-                        } catch (Exception e) {
-                            System.out.println(e.getMessage());
-                        }
+                        membershipService.buyMembership(memberId, days);
+                        System.out.println("Membership activated.");
                     }
 
                     case "7" -> {
-                        long memberId = readInt(scanner, "Member ID: ");
+                        long memberId = readLong(scanner, "Member ID: ");
                         int days = readInt(scanner, "Extend by days: ");
-
-                        try {
-                            membershipService.extendMembership(memberId, days);
-                            System.out.println("Membership extended.");
-                        } catch (Exception e) {
-                            System.out.println(e.getMessage());
-                        }
+                        membershipService.extendMembership(memberId, days);
+                        System.out.println("Membership extended.");
                     }
 
                     case "8" -> {
@@ -87,21 +81,23 @@ public class Main {
                         }
                     }
 
+                    case "9" -> generateTrainingPlan(scanner, memberRepo);
 
                     case "0" -> {
                         System.out.println("Goodbye!");
                         return;
                     }
+
                     default -> System.out.println("Invalid option. Try again.");
                 }
 
                 System.out.println();
             }
-
         } catch (Exception e) {
             System.out.println("ERROR:");
             e.printStackTrace();
         }
+
     }
 
     private static void printMenu() {
@@ -114,6 +110,7 @@ public class Main {
         System.out.println("6) Buy membership");
         System.out.println("7) Extend membership");
         System.out.println("8) Show active members (Lambda + Predicate)");
+        System.out.println("9) Generate training plan (Factory + Builder + Lambda)");
         System.out.println("0) Exit");
     }
 
@@ -249,6 +246,15 @@ public class Main {
         }
     }
 
+    private static int readInt(Scanner scanner, String prompt) {
+        System.out.print(prompt);
+        return readInt(scanner);
+    }
+    private static long readLong(Scanner scanner, String prompt) {
+        System.out.print(prompt);
+        return readLong(scanner);
+    }
+
     private static long readLong(Scanner scanner) {
         while (true) {
             String s = scanner.nextLine().trim();
@@ -257,6 +263,26 @@ public class Main {
             } catch (NumberFormatException e) {
                 System.out.print("Please enter a valid number: ");
             }
+        }
+    }
+
+    private static void generateTrainingPlan(Scanner scanner, MemberRepository memberRepo) {
+        System.out.println("\n--- TRAINING PLAN ---");
+        long memberId = readLong(scanner, "Member ID: ");
+
+        Member m = memberRepo.findById(memberId);
+        if (m == null) {
+            System.out.println("Member not found.");
+            return;
+        }
+
+        var plan = edu.aitu.oop3.factories.TrainingPlanFactory.createFor(m);
+
+        System.out.println("Plan: " + plan.getTitle());
+        System.out.println("Exercises:");
+        int i = 1;
+        for (String ex : plan.getExercises()) {
+            System.out.println(i++ + ") " + ex);
         }
     }
 }

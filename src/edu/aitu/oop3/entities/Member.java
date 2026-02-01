@@ -32,9 +32,6 @@ public class Member {
         this.membershipEnd = b.membershipEnd;
     }
 
-    public Member orElseThrow(Object o) {
-    }
-
     public static class Builder {
         private long id;
         private String name;

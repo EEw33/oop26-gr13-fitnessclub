@@ -17,13 +17,13 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public Member buyMembership(Long memberId, int durationDays) throws NotFoundException {
-        Member m = memberRepo.findById(memberId)
-                .orElseThrow(() -> new NotFoundException("Member not found: " + memberId));
+        Member m = memberRepo.findById(memberId);
+        if (m == null) throw new NotFoundException("Member not found: " + memberId);
 
         LocalDate start = LocalDate.now();
         LocalDate end = start.plusDays(durationDays);
 
-        m.setMembershipStart(start.toString()); // ISO yyyy-MM-dd
+        m.setMembershipStart(start.toString());
         m.setMembershipEnd(end.toString());
 
         memberRepo.update(m);
@@ -32,29 +32,26 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public Member extendMembership(Long memberId, int durationDays) throws NotFoundException {
-        Member m = memberRepo.findById(memberId)
-                .orElseThrow(() -> new NotFoundException("Member not found: " + memberId));
+        Member m = memberRepo.findById(memberId);
+        if (m == null) throw new NotFoundException("Member not found: " + memberId);
 
         LocalDate today = LocalDate.now();
 
-        // Parse existing end date (String -> LocalDate)
         LocalDate currentEnd = null;
         String endStr = m.getMembershipEnd();
         if (endStr != null && !endStr.isBlank()) {
-            currentEnd = LocalDate.parse(endStr); // expects yyyy-MM-dd
+            currentEnd = LocalDate.parse(endStr);
         }
 
         LocalDate base = (currentEnd == null || currentEnd.isBefore(today)) ? today : currentEnd;
         LocalDate newEnd = base.plusDays(durationDays);
 
-        // If membershipStart missing, set it
         String startStr = m.getMembershipStart();
         if (startStr == null || startStr.isBlank()) {
             m.setMembershipStart(today.toString());
         }
 
         m.setMembershipEnd(newEnd.toString());
-
         memberRepo.update(m);
         return m;
     }
