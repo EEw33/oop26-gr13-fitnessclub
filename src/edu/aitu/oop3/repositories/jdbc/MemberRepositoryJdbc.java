@@ -5,6 +5,7 @@ import edu.aitu.oop3.entities.Member;
 import edu.aitu.oop3.repositories.MemberRepository;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class MemberRepositoryJdbc implements MemberRepository {
     @Override
     public Member create(Member entity) {
         String sql = """
-            INSERT INTO members (name, email, membership_type_id, membership_start, membership_end)
+            INSERT INTO members (full_name, email, membership_type_id, membership_start, membership_end)
             VALUES (?, ?, ?, ?, ?)
             RETURNING id
             """;
@@ -27,14 +28,21 @@ public class MemberRepositoryJdbc implements MemberRepository {
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
+            // full_name
             ps.setString(1, entity.getName());
             ps.setString(2, entity.getEmail());
 
+            // membership_type_id (nullable)
             if (entity.getMembershipTypeId() == null) ps.setNull(3, Types.BIGINT);
             else ps.setLong(3, entity.getMembershipTypeId());
 
-            ps.setString(4, entity.getMembershipStart());
-            ps.setString(5, entity.getMembershipEnd());
+            // membership_start (DATE)
+            if (entity.getMembershipStart() == null) ps.setNull(4, Types.DATE);
+            else ps.setDate(4, java.sql.Date.valueOf(LocalDate.parse(entity.getMembershipStart())));
+
+            // membership_end (DATE)
+            if (entity.getMembershipEnd() == null) ps.setNull(5, Types.DATE);
+            else ps.setDate(5, java.sql.Date.valueOf(LocalDate.parse(entity.getMembershipEnd())));
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -54,7 +62,7 @@ public class MemberRepositoryJdbc implements MemberRepository {
         if (id == null) return null;
 
         String sql = """
-            SELECT id, name, email, membership_type_id, membership_start, membership_end
+            SELECT id, full_name, email, membership_type_id, membership_start, membership_end
             FROM members
             WHERE id = ?
             """;
@@ -69,15 +77,18 @@ public class MemberRepositoryJdbc implements MemberRepository {
 
                 Member m = new Member();
                 m.setId(rs.getLong("id"));
-                m.setName(rs.getString("name"));
+                m.setName(rs.getString("full_name"));
                 m.setEmail(rs.getString("email"));
 
                 long mt = rs.getLong("membership_type_id");
                 if (rs.wasNull()) m.setMembershipTypeId(null);
                 else m.setMembershipTypeId(mt);
 
-                m.setMembershipStart(rs.getString("membership_start"));
-                m.setMembershipEnd(rs.getString("membership_end"));
+                Date start = rs.getDate("membership_start");
+                Date end = rs.getDate("membership_end");
+                m.setMembershipStart(start == null ? null : start.toString());
+                m.setMembershipEnd(end == null ? null : end.toString());
+
                 return m;
             }
 
@@ -89,7 +100,7 @@ public class MemberRepositoryJdbc implements MemberRepository {
     @Override
     public List<Member> findAll() {
         String sql = """
-            SELECT id, name, email, membership_type_id, membership_start, membership_end
+            SELECT id, full_name, email, membership_type_id, membership_start, membership_end
             FROM members
             ORDER BY id
             """;
@@ -103,15 +114,17 @@ public class MemberRepositoryJdbc implements MemberRepository {
             while (rs.next()) {
                 Member m = new Member();
                 m.setId(rs.getLong("id"));
-                m.setName(rs.getString("name"));
+                m.setName(rs.getString("full_name"));
                 m.setEmail(rs.getString("email"));
 
                 long mt = rs.getLong("membership_type_id");
                 if (rs.wasNull()) m.setMembershipTypeId(null);
                 else m.setMembershipTypeId(mt);
 
-                m.setMembershipStart(rs.getString("membership_start"));
-                m.setMembershipEnd(rs.getString("membership_end"));
+                Date start = rs.getDate("membership_start");
+                Date end = rs.getDate("membership_end");
+                m.setMembershipStart(start == null ? null : start.toString());
+                m.setMembershipEnd(end == null ? null : end.toString());
 
                 members.add(m);
             }
@@ -127,7 +140,7 @@ public class MemberRepositoryJdbc implements MemberRepository {
     public void update(Member member) {
         String sql = """
             UPDATE members
-            SET name = ?, email = ?, membership_type_id = ?, membership_start = ?, membership_end = ?
+            SET full_name = ?, email = ?, membership_type_id = ?, membership_start = ?, membership_end = ?
             WHERE id = ?
             """;
 
@@ -140,11 +153,16 @@ public class MemberRepositoryJdbc implements MemberRepository {
             if (member.getMembershipTypeId() == null) ps.setNull(3, Types.BIGINT);
             else ps.setLong(3, member.getMembershipTypeId());
 
-            ps.setString(4, member.getMembershipStart());
-            ps.setString(5, member.getMembershipEnd());
+            if (member.getMembershipStart() == null) ps.setNull(4, Types.DATE);
+            else ps.setDate(4, java.sql.Date.valueOf(LocalDate.parse(member.getMembershipStart())));
+
+            if (member.getMembershipEnd() == null) ps.setNull(5, Types.DATE);
+            else ps.setDate(5, java.sql.Date.valueOf(LocalDate.parse(member.getMembershipEnd())));
+
             ps.setLong(6, member.getId());
 
             ps.executeUpdate();
+
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update member: " + e.getMessage(), e);
         }
