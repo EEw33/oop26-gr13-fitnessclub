@@ -6,14 +6,13 @@ import java.sql.SQLException;
 
 public class DatabaseConnection implements IDB {
 
-    private static final String URL = "jdbc:postgresql://aws-1-eu-west-1.pooler.supabase.com:5432/postgres?sslmode=require";
+    private static final String URL =
+            "jdbc:postgresql://aws-1-eu-west-1.pooler.supabase.com:5432/postgres?sslmode=require";
     private static final String USER = "postgres.mroqxoagriazcqlrqgdf";
-    private static final String PASSWORD = "&+bmrx2YUeFAT4b";
 
     private static DatabaseConnection instance;
 
-    private DatabaseConnection() {
-    }
+    private DatabaseConnection() {}
 
     public static DatabaseConnection getInstance() {
         if (instance == null) {
@@ -24,6 +23,13 @@ public class DatabaseConnection implements IDB {
 
     @Override
     public Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+        String password = System.getenv("DB_PASSWORD");
+        if (password == null || password.isBlank()) {
+            throw new IllegalStateException(
+                    "DB_PASSWORD environment variable is not set. " +
+                            "Set it in IntelliJ Run Configuration -> Environment variables."
+            );
+        }
+        return DriverManager.getConnection(URL, USER, password);
     }
 }
