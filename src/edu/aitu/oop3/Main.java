@@ -1,23 +1,23 @@
 package edu.aitu.oop3;
 
-import edu.aitu.oop3.components.ConsoleNotificationComponent;
-import edu.aitu.oop3.components.NotificationComponent;
-import edu.aitu.oop3.components.StatisticsComponent;
-import edu.aitu.oop3.db.DatabaseConnection;
-import edu.aitu.oop3.entities.ClassBooking;
-import edu.aitu.oop3.entities.FitnessClass;
-import edu.aitu.oop3.entities.Member;
-import edu.aitu.oop3.entities.MembershipType;
-import edu.aitu.oop3.factories.MembershipTypeFactory;
-import edu.aitu.oop3.repositories.BookingRepository;
-import edu.aitu.oop3.repositories.FitnessClassRepository;
-import edu.aitu.oop3.repositories.MemberRepository;
-import edu.aitu.oop3.repositories.jdbc.BookingRepositoryJdbc;
-import edu.aitu.oop3.repositories.jdbc.FitnessClassRepositoryJdbc;
-import edu.aitu.oop3.repositories.jdbc.MemberRepositoryJdbc;
-import edu.aitu.oop3.services.MembershipService;
-import edu.aitu.oop3.services.impl.MembershipServiceImpl;
-import edu.aitu.oop3.utils.Filter;
+import edu.aitu.oop3.monitoring.ConsoleNotificationComponent;
+import edu.aitu.oop3.monitoring.NotificationComponent;
+import edu.aitu.oop3.reporting.StatisticsComponent;
+import edu.aitu.oop3.dataaccess.db.DatabaseConnection;
+import edu.aitu.oop3.core.entities.ClassBooking;
+import edu.aitu.oop3.core.entities.FitnessClass;
+import edu.aitu.oop3.core.entities.Member;
+import edu.aitu.oop3.core.entities.MembershipType;
+import edu.aitu.oop3.core.factories.MembershipTypeFactory;
+import edu.aitu.oop3.core.repositories.BookingRepository;
+import edu.aitu.oop3.core.repositories.FitnessClassRepository;
+import edu.aitu.oop3.core.repositories.MemberRepository;
+import edu.aitu.oop3.dataaccess.db.jdbc.BookingRepositoryJdbc;
+import edu.aitu.oop3.dataaccess.db.jdbc.FitnessClassRepositoryJdbc;
+import edu.aitu.oop3.dataaccess.db.jdbc.MemberRepositoryJdbc;
+import edu.aitu.oop3.payment.MembershipService;
+import edu.aitu.oop3.payment.MembershipServiceImpl;
+import edu.aitu.oop3.core.utils.Filter;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -289,7 +289,7 @@ public class Main {
             return;
         }
 
-        var plan = edu.aitu.oop3.factories.TrainingPlanFactory.createFor(m);
+        var plan = edu.aitu.oop3.core.factories.TrainingPlanFactory.createFor(m);
 
         System.out.println("Plan: " + plan.getTitle());
         System.out.println("Exercises:");
