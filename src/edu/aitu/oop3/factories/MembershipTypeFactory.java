@@ -3,7 +3,6 @@ package edu.aitu.oop3.factories;
 import edu.aitu.oop3.entities.MembershipType;
 
 public class MembershipTypeFactory {
-
     public static MembershipType create(String type) {
         if (type == null) {
             throw new IllegalArgumentException("Membership type cannot be null");

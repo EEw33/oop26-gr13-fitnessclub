@@ -1,17 +1,19 @@
 package edu.aitu.oop3;
 
+import edu.aitu.oop3.components.ConsoleNotificationComponent;
+import edu.aitu.oop3.components.NotificationComponent;
+import edu.aitu.oop3.components.StatisticsComponent;
 import edu.aitu.oop3.db.DatabaseConnection;
 import edu.aitu.oop3.entities.ClassBooking;
 import edu.aitu.oop3.entities.FitnessClass;
 import edu.aitu.oop3.entities.Member;
 import edu.aitu.oop3.entities.MembershipType;
-import edu.aitu.oop3.exceptions.NotFoundException;
 import edu.aitu.oop3.factories.MembershipTypeFactory;
 import edu.aitu.oop3.repositories.BookingRepository;
-import edu.aitu.oop3.repositories.jdbc.BookingRepositoryJdbc;
 import edu.aitu.oop3.repositories.FitnessClassRepository;
-import edu.aitu.oop3.repositories.jdbc.FitnessClassRepositoryJdbc;
 import edu.aitu.oop3.repositories.MemberRepository;
+import edu.aitu.oop3.repositories.jdbc.BookingRepositoryJdbc;
+import edu.aitu.oop3.repositories.jdbc.FitnessClassRepositoryJdbc;
 import edu.aitu.oop3.repositories.jdbc.MemberRepositoryJdbc;
 import edu.aitu.oop3.services.MembershipService;
 import edu.aitu.oop3.services.impl.MembershipServiceImpl;
@@ -38,6 +40,8 @@ public class Main {
 
         MembershipService membershipService = new MembershipServiceImpl(memberRepo);
 
+        NotificationComponent notifier = new ConsoleNotificationComponent();
+        StatisticsComponent statistics = new StatisticsComponent(bookingRepo);
 
         try {
             while (true) {
@@ -48,22 +52,22 @@ public class Main {
                 switch (input) {
                     case "1" -> listMembers(memberRepo);
                     case "2" -> listClasses(classRepo);
-                    case "3" -> bookClass(scanner, memberRepo, classRepo, bookingRepo);
+                    case "3" -> bookClass(scanner, memberRepo, classRepo, bookingRepo, notifier);
                     case "4" -> viewHistory(scanner, bookingRepo);
-                    case "5" -> addMemberWithBuilderAndFactory(scanner, memberRepo);
+                    case "5" -> addMemberWithBuilderAndFactory(scanner, memberRepo, notifier);
 
                     case "6" -> {
                         long memberId = readLong(scanner, "Member ID: ");
                         int days = readInt(scanner, "Duration (days): ");
                         membershipService.buyMembership(memberId, days);
-                        System.out.println("Membership activated.");
+                        notifier.notifyUser("Membership activated.");
                     }
 
                     case "7" -> {
                         long memberId = readLong(scanner, "Member ID: ");
                         int days = readInt(scanner, "Extend by days: ");
                         membershipService.extendMembership(memberId, days);
-                        System.out.println("Membership extended.");
+                        notifier.notifyUser("Membership extended.");
                     }
 
                     case "8" -> {
@@ -79,16 +83,19 @@ public class Main {
                         for (Member m : activeMembers) {
                             System.out.println(m.getId() + " | " + m.getName() + " | until: " + m.getMembershipEnd());
                         }
+
+                        long activeCount = statistics.countActiveMembers(members);
+                        System.out.println("Active members count (StatisticsComponent): " + activeCount);
                     }
 
                     case "9" -> generateTrainingPlan(scanner, memberRepo);
 
                     case "0" -> {
-                        System.out.println("Goodbye!");
+                        notifier.notifyUser("Goodbye!");
                         return;
                     }
 
-                    default -> System.out.println("Invalid option. Try again.");
+                    default -> notifier.notifyUser("Invalid option. Try again.");
                 }
 
                 System.out.println();
@@ -97,7 +104,6 @@ public class Main {
             System.out.println("ERROR:");
             e.printStackTrace();
         }
-
     }
 
     private static void printMenu() {
@@ -109,7 +115,7 @@ public class Main {
         System.out.println("5) Add member (Builder+Factory)");
         System.out.println("6) Buy membership");
         System.out.println("7) Extend membership");
-        System.out.println("8) Show active members (Lambda + Predicate)");
+        System.out.println("8) Show active members (Lambda + Predicate + StatisticsComponent)");
         System.out.println("9) Generate training plan (Factory + Builder + Lambda)");
         System.out.println("0) Exit");
     }
@@ -141,7 +147,11 @@ public class Main {
         }
     }
 
-    private static void addMemberWithBuilderAndFactory(Scanner scanner, MemberRepository memberRepo) {
+    private static void addMemberWithBuilderAndFactory(
+            Scanner scanner,
+            MemberRepository memberRepo,
+            NotificationComponent notifier
+    ) {
         System.out.println("\n--- ADD MEMBER (Builder+Factory) ---");
 
         System.out.print("Enter full name: ");
@@ -167,24 +177,26 @@ public class Main {
                 .build();
 
         Member created = memberRepo.create(member);
-        System.out.println("Created member id=" + created.getId() + " | " + mt.getName());
+        notifier.notifyUser("Created member id=" + created.getId() + " | " + mt.getName());
     }
 
-    private static void bookClass(Scanner scanner,
-                                  MemberRepository memberRepo,
-                                  FitnessClassRepository classRepo,
-                                  BookingRepository bookingRepo) {
-
+    private static void bookClass(
+            Scanner scanner,
+            MemberRepository memberRepo,
+            FitnessClassRepository classRepo,
+            BookingRepository bookingRepo,
+            NotificationComponent notifier
+    ) {
         System.out.println("\n--- BOOK A CLASS ---");
 
         System.out.print("Enter member ID: ");
         long memberIdLong = readLong(scanner);
         if (memberRepo.findById(memberIdLong) == null) {
-            System.out.println("Member not found.");
+            notifier.notifyUser("Member not found.");
             return;
         }
         if (memberIdLong > Integer.MAX_VALUE) {
-            System.out.println("Member ID is too large for current booking repository (int).");
+            notifier.notifyUser("Member ID is too large for current booking repository (int).");
             return;
         }
         int memberId = (int) memberIdLong;
@@ -193,21 +205,21 @@ public class Main {
         int classId = readInt(scanner);
         FitnessClass fc = classRepo.findById(classId);
         if (fc == null) {
-            System.out.println("Class not found.");
+            notifier.notifyUser("Class not found.");
             return;
         }
 
         int current = bookingRepo.countByClassId(classId);
         if (current >= fc.getCapacity()) {
-            System.out.println("Class is full.");
+            notifier.notifyUser("Class is full.");
             return;
         }
 
         boolean inserted = bookingRepo.createIfNotExists(memberId, classId);
         if (!inserted) {
-            System.out.println("Booking already exists.");
+            notifier.notifyUser("Booking already exists.");
         } else {
-            System.out.println("Booked successfully!");
+            notifier.notifyUser("Booked successfully!");
         }
     }
 
@@ -250,6 +262,7 @@ public class Main {
         System.out.print(prompt);
         return readInt(scanner);
     }
+
     private static long readLong(Scanner scanner, String prompt) {
         System.out.print(prompt);
         return readLong(scanner);
