@@ -1,23 +1,24 @@
 package edu.aitu.oop3;
 
-import edu.aitu.oop3.monitoring.ConsoleNotificationComponent;
-import edu.aitu.oop3.monitoring.NotificationComponent;
-import edu.aitu.oop3.reporting.StatisticsComponent;
-import edu.aitu.oop3.dataaccess.db.DatabaseConnection;
-import edu.aitu.oop3.core.entities.ClassBooking;
-import edu.aitu.oop3.core.entities.FitnessClass;
-import edu.aitu.oop3.core.entities.Member;
-import edu.aitu.oop3.core.entities.MembershipType;
-import edu.aitu.oop3.core.factories.MembershipTypeFactory;
-import edu.aitu.oop3.core.repositories.BookingRepository;
-import edu.aitu.oop3.core.repositories.FitnessClassRepository;
-import edu.aitu.oop3.core.repositories.MemberRepository;
-import edu.aitu.oop3.dataaccess.db.jdbc.BookingRepositoryJdbc;
-import edu.aitu.oop3.dataaccess.db.jdbc.FitnessClassRepositoryJdbc;
-import edu.aitu.oop3.dataaccess.db.jdbc.MemberRepositoryJdbc;
-import edu.aitu.oop3.payment.MembershipService;
-import edu.aitu.oop3.payment.MembershipServiceImpl;
-import edu.aitu.oop3.core.utils.Filter;
+import edu.aitu.oop3.CatalogComponent.factories.TrainingPlanFactory;
+import edu.aitu.oop3.MonitoringComponent.ConsoleNotificationComponent;
+import edu.aitu.oop3.MonitoringComponent.NotificationComponent;
+import edu.aitu.oop3.ReportingComponent.StatisticsComponent;
+import edu.aitu.oop3.DataAccessComponent.db.DatabaseConnection;
+import edu.aitu.oop3.ReservationComponent.entities.ClassBooking;
+import edu.aitu.oop3.CatalogComponent.entities.FitnessClass;
+import edu.aitu.oop3.MemberManagmentComponent.entities.Member;
+import edu.aitu.oop3.CatalogComponent.entities.MembershipType;
+import edu.aitu.oop3.CatalogComponent.factories.MembershipTypeFactory;
+import edu.aitu.oop3.ReservationComponent.repository.BookingRepository;
+import edu.aitu.oop3.CatalogComponent.repository.FitnessClassRepository;
+import edu.aitu.oop3.MemberManagmentComponent.repository.MemberRepository;
+import edu.aitu.oop3.DataAccessComponent.jdbc.BookingRepositoryJdbc;
+import edu.aitu.oop3.DataAccessComponent.jdbc.FitnessClassRepositoryJdbc;
+import edu.aitu.oop3.DataAccessComponent.jdbc.MemberRepositoryJdbc;
+import edu.aitu.oop3.PaymentComponent.service.MembershipService;
+import edu.aitu.oop3.PaymentComponent.service.MembershipServiceImpl;
+import edu.aitu.oop3.CoreComponent.utils.Filter;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -289,7 +290,7 @@ public class Main {
             return;
         }
 
-        var plan = edu.aitu.oop3.core.factories.TrainingPlanFactory.createFor(m);
+        var plan = TrainingPlanFactory.createFor(m);
 
         System.out.println("Plan: " + plan.getTitle());
         System.out.println("Exercises:");
